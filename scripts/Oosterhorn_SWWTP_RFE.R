@@ -214,6 +214,7 @@ selected_parameters = c(selected_parameters, SVI_selected)
 #weekly averaged data using the selected parameters 
 
 weekly_data = weekly_data[selected_parameters]
+
 #check 
 #colSums(is.na(weekly_data))
 plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
@@ -241,6 +242,14 @@ model1 = lm(rarity~., data = weekly_data)
 vif(model1)
 mean(vif(model1))
 #if bigger than 4 there is concerning multi-collinearity in the data 
+
+#EDA for selected parameters in weekly data
+weekly_data %>%
+  create_report(
+    output_file = "weekly_data_final",
+    output_dir = "output_data/" ,
+    report_title = "EDA Report - weekly_data_final", 
+    config = configure_report(add_plot_correlation = FALSE)) 
 
 ################################################################################
 #remove parameters with missing data points
