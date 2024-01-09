@@ -282,7 +282,7 @@ Weekly_Data <- weekly_data
 
 #12 input and rarity column 13 is output 
 #normalization of the variable values and splitting of input and target values  
-x <-Weekly_Data[,1:11]
+x <-Weekly_Data[,1:12]
 normalization <- preProcess(x)
 x <- predict(normalization, x)
 x <- as.data.frame(x)
@@ -293,7 +293,7 @@ control_RF_CV = rfeControl(functions=rfFuncs, method="cv", repeats = 5, number =
 control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResamp = 'all')
 
 #reproducible data 
-set.seed(29173)
+set.seed(1127430)
 
 #split data- 80% for training and 20% for testing 
 inTrain <- createDataPartition(Weekly_Data$rarity, p= .80, list = FALSE)[,1]
@@ -305,11 +305,11 @@ y_train <- y[ inTrain]
 y_test <- y[ -inTrain]
 
 #run RFE
-results_rfe1 <- rfe(x =x_train , y= y_train , sizes=c(1:11),rfeControl=control_RF_CV)
+results_rfe1 <- rfe(x =x_train , y= y_train , sizes=c(1:12),rfeControl=control_RF_CV)
 sprintf("The optimal number of variables is: %s", results_rfe1$bestSubset)
 sprintf("Optimal Variable: %s", results_rfe1$optVariables)
 
-results_rfe2 <- rfe(x =x_train , y= y_train , sizes=c(1:11),rfeControl=control_TB_LOOCV)
+results_rfe2 <- rfe(x =x_train , y= y_train , sizes=c(1:12),rfeControl=control_TB_LOOCV)
 sprintf("The optimal number of variables is: %s", results_rfe2$bestSubset)
 sprintf("Optimal Variable: %s", results_rfe2$optVariables)
 #plot <- ggplot(data = results_rfe1, metric = "RMSE")
@@ -364,7 +364,7 @@ dev.off()
 
 Weekly_Data<-as.data.frame(weekly_data)
 
-rfe_fit<- rfeTerminator(Weekly_Data, x_cols= 1:11, y_cols=12, alter_df = TRUE, eval_funcs = rfFuncs)
+rfe_fit<- rfeTerminator(Weekly_Data, x_cols= 1:12, y_cols=13, alter_df = TRUE, eval_funcs = rfFuncs)
 
 #Explore the optimal model results
 print(rfe_fit$rfe_model_fit_results)
