@@ -243,13 +243,6 @@ vif(model1)
 mean(vif(model1))
 #if bigger than 4 there is concerning multi-collinearity in the data 
 
-#EDA for selected parameters in weekly data
-weekly_data %>%
-  create_report(
-    output_file = "weekly_data_final",
-    output_dir = "output_data/" ,
-    report_title = "EDA Report - weekly_data_final", 
-    config = configure_report(add_plot_correlation = FALSE)) 
 
 ################################################################################
 #remove parameters with missing data points
@@ -268,8 +261,16 @@ model1 = lm(rarity~., data = weekly_data)
 vif(model1)
 mean(vif(model1))
 plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
-
+dim(weekly_data)
 write.csv(weekly_data, "output_data/relevant_process_data.csv", row.names=FALSE)
+
+#EDA for selected parameters in weekly data
+weekly_data %>%
+  create_report(
+    output_file = "weekly_data_final",
+    output_dir = "output_data/" ,
+    report_title = "EDA Report - weekly_data_final", 
+    config = configure_report(add_plot_correlation = FALSE)) 
 
 ###############################################################################
 ###############################################################################
@@ -278,6 +279,8 @@ write.csv(weekly_data, "output_data/relevant_process_data.csv", row.names=FALSE)
 #rfe1 is fitted to Random Forest model with with 10 k-fold cross correlation  
 #ref2 is fitted to bagged trees model with with leave one out cross correlation
 Weekly_Data <- weekly_data
+
+#12 input and rarity column 13 is output 
 #normalization of the variable values and splitting of input and target values  
 x <-Weekly_Data[,1:11]
 normalization <- preProcess(x)
