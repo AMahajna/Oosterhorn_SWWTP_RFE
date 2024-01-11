@@ -25,7 +25,7 @@ online_data = read_excel("input_data/ZAWZI_Online_data.xlsx")
 SVI_data = read_excel("input_data/ZAWZI_AT_SVI_DS.xlsx") 
 
 ##Load weekly averaged data and rarity from microbiome analysis 
-weekly_data = read_excel("input_data/WWTP_processdata_perweek_20180125_NGS.xlsx") 
+weekly_data = read_excel("input_data/WWTP_processdata_perweek_20180125_NGS_T.xlsx") 
 rarity = read_csv("input_data/Rarity.csv")
 
 ################################################################################
@@ -36,7 +36,7 @@ glycerol_methanol[ , c("Glycerol_kg","Methanol_kg")] %>%
   create_report(
     output_file = "EDA_ZAWZI_INF_glycerol_methanol_final",
     output_dir = "output_data/" ,
-    report_title = "EDA Report - ZAWZI_INF_glycerol_methanol", 
+    report_title = "EDA Report - ZAWZI_INF_glycerol_methanol",
     config = configure_report(add_plot_correlation = FALSE))
 
 #Sheet: ZAWZI_additional_data
@@ -212,11 +212,16 @@ selected_parameters = c(selected_parameters, SVI_selected)
 
 #After we have selected parameters using collinearity analysis, we subset 
 #weekly averaged data using the selected parameters 
-
+selected_parameters = c(selected_parameters, "T_avg_C")
 weekly_data = weekly_data[selected_parameters]
 
 #check 
+#dim(weekly_data)
+#should be 18
+
+#check 
 #colSums(is.na(weekly_data))
+
 plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
 weekly_data =  subset(weekly_data, select = -c(INF_K_mg_per_l,INF_pH_pH))
 
@@ -282,7 +287,7 @@ Weekly_Data <- weekly_data
 
 #12 input and rarity column 13 is output 
 #normalization of the variable values and splitting of input and target values  
-x <-Weekly_Data[,1:12]
+x <-Weekly_Data[,1:13]
 normalization <- preProcess(x)
 x <- predict(normalization, x)
 x <- as.data.frame(x)
@@ -293,7 +298,7 @@ control_RF_CV = rfeControl(functions=rfFuncs, method="cv", repeats = 5, number =
 control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResamp = 'all')
 
 #reproducible data 
-set.seed(1127430)
+set.seed(11227430)
 
 #split data- 80% for training and 20% for testing 
 inTrain <- createDataPartition(Weekly_Data$rarity, p= .80, list = FALSE)[,1]
@@ -305,11 +310,11 @@ y_train <- y[ inTrain]
 y_test <- y[ -inTrain]
 
 #run RFE
-results_rfe1 <- rfe(x =x_train , y= y_train , sizes=c(1:12),rfeControl=control_RF_CV)
+results_rfe1 <- rfe(x =x_train , y= y_train , sizes=c(1:13),rfeControl=control_RF_CV)
 sprintf("The optimal number of variables is: %s", results_rfe1$bestSubset)
 sprintf("Optimal Variable: %s", results_rfe1$optVariables)
 
-results_rfe2 <- rfe(x =x_train , y= y_train , sizes=c(1:12),rfeControl=control_TB_LOOCV)
+results_rfe2 <- rfe(x =x_train , y= y_train , sizes=c(1:13),rfeControl=control_TB_LOOCV)
 sprintf("The optimal number of variables is: %s", results_rfe2$bestSubset)
 sprintf("Optimal Variable: %s", results_rfe2$optVariables)
 #plot <- ggplot(data = results_rfe1, metric = "RMSE")
