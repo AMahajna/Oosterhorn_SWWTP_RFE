@@ -353,8 +353,17 @@ dev.off()
 
 # Combine plots and label them
 #combined_plot <- plot_grid(plot1, plot_var_imp, labels = c("a", "b"), ncol = 1)
-combined_plot <- grid.arrange(plot1, plot_var_imp, ncol = 1)
+# Create text labels for the plots
+label_a <- textGrob("a", gp = gpar(fontsize = 16), x = 0, y = 1, just = c("left", "top"))  # Position in top-left corner
+label_b <- textGrob("b", gp = gpar(fontsize = 16), x = 0, y = 1, just = c("left", "top"))  # Position in top-left corner
 
+
+# Combine plots and add labels
+combined_plot <- grid.arrange(
+  arrangeGrob(plot1, top = label_a),  # Add label 'a' above the first plot
+  arrangeGrob(plot_var_imp, top = label_b),  # Add label 'b' above the second plot
+  ncol = 1
+)
 # Save the combined plot as a PNG
 ggsave("figures/combined_plot_RMSE_var_imp.png", combined_plot, height=8, width=8)
 
