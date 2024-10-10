@@ -346,7 +346,7 @@ plot_var_imp = ggplot(data = varimp_data,
   geom_bar(stat="identity") + labs(x = "Features", y = "Variable Importance") + 
   geom_text(aes(label = round(importance, 2)), vjust=1.25, hjust=1.25,color="white", size=4) + 
   theme_bw() + theme(legend.position = "none", 
-                     axis.text.y = element_text(angle = 45, hjust = 1, size =12)) +
+                     axis.text.y = element_text(angle = 45, hjust = 1, size =11)) +
   coord_flip()
 print(plot_var_imp)
 dev.off()
