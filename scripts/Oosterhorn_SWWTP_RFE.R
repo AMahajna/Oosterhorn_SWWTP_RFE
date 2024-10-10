@@ -1,6 +1,5 @@
 ################################################################################
-################################################################################
-##Exploratory Data Analysis 
+#Recursive Feature Elimination 
 
 ################################################################################
 ##install and load packages 
@@ -32,7 +31,7 @@ Weekly_Data = read_excel("input_data/WWTP_processdata_perweek_20180125_NGS_T.xls
 diversity = read_csv("input_data/alpha_diversity.csv")
 diversity =diversity [ ,5]
 ################################################################################
-##EDA
+##EDA ##Exploratory Data Analysis 
 
 #Sheet: ZAWZI_INF_glycerol_methanol
 glycerol_methanol[ , c("Glycerol_kg","Methanol_kg")] %>%
@@ -218,12 +217,9 @@ plot_missing(SVI_data, title = "missing data profile for SVI dataset")
 #selected_parameters = c(selected_parameters, "T_avg_C")
 Weekly_Data = Weekly_Data[selected_parameters]
 
-#check 
-#dim(weekly_data)
-#should be 18
 
 #check 
-#colSums(is.na(weekly_data))
+#colSums(is.na(Weekly_Data))
 
 plot_missing(Weekly_Data, title = "missing data profile for selected parameters in weekly data")
 Weekly_Data =  subset(Weekly_Data, select = -c(INF_K_mg_per_l,INF_pH_pH))
@@ -259,21 +255,21 @@ Weekly_Data =  subset(Weekly_Data, select = -c(Sludge_load_calc_WWTP_kg_COD_per_
 #weekly_data = weekly_data[-c(8,9,10)]
 
 #Check for multi-collinearity problem
-weekly_data_cor = cor(weekly_data, use = "pairwise.complete.obs")
-weekly_data_testRes= cor.mtest(weekly_data,conf.level = 0.95)
+weekly_data_cor = cor(Weekly_Data, use = "pairwise.complete.obs")
+weekly_data_testRes= cor.mtest(Weekly_Data,conf.level = 0.95)
 
 #Condition number ratio of max to min Eigen values of the correlation matrix  
 kappa(weekly_data_cor,exact=TRUE)
 
-model1 = lm(diversity~., data = weekly_data)
+model1 = lm(diversity~., data = Weekly_Data)
 vif(model1)
 mean(vif(model1))
-plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
-dim(weekly_data)
-write.csv(weekly_data, "output_data/relevant_process_data.csv", row.names=FALSE)
+plot_missing(Weekly_Data, title = "missing data profile for selected parameters in weekly data")
+dim(Weekly_Data)
+write.csv(Weekly_Data, "output_data/relevant_process_data.csv", row.names=FALSE)
 
 #EDA for selected parameters in weekly data
-weekly_data %>%
+Weekly_Data %>%
   create_report(
     output_file = "weekly_data_final",
     output_dir = "output_data/" ,
@@ -286,7 +282,7 @@ weekly_data %>%
 
 #rfe1 is fitted to Random Forest model with with 10 k-fold cross correlation  
 #ref2 is fitted to bagged trees model with with leave one out cross correlation
-Weekly_Data <- weekly_data
+#Weekly_Data <- weekly_data
 
 #12 input and diversity column 13 is output 
 #normalization of the variable values and splitting of input and target values  
@@ -294,14 +290,15 @@ x <-Weekly_Data[,1:13]
 normalization <- preProcess(x)
 x <- predict(normalization, x)
 x <- as.data.frame(x)
-y<- diversity
+y<- as.data.frame(diversity)
 
 #training scheme: setting up the controls for each recursive feature elimination 
 control_RF_CV = rfeControl(functions=rfFuncs, method="cv", repeats = 5, number = 10, returnResamp = 'all')
 control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResamp = 'all')
+control_RF_LOOCV = rfeControl(functions=rfFuncs, method="LOOCV", returnResamp = 'all')
 
 #reproducible data 
-set.seed(11227430)
+set.seed(21321)
 
 #split data- 80% for training and 20% for testing 
 inTrain <- createDataPartition(Weekly_Data$diversity, p= .80, list = FALSE)[,1]
@@ -309,13 +306,18 @@ inTrain <- createDataPartition(Weekly_Data$diversity, p= .80, list = FALSE)[,1]
 x_train <- x[ inTrain, ]
 x_test <- x[-inTrain, ]
 
-y_train <- y[ inTrain]
-y_test <- y[ -inTrain]
+y_train <- y[ inTrain,1]
+y_test <- y[ -inTrain,1]
 
 #run RFE
 results_rfe1 <- rfe(x =x_train , y= y_train , sizes=c(1:13),rfeControl=control_RF_CV)
 sprintf("The optimal number of variables is: %s", results_rfe1$bestSubset)
 sprintf("Optimal Variable: %s", results_rfe1$optVariables)
+
+# RFE LOOCV
+results_rfe_rf_loocv <- rfe(x =x_train , y= y_train , sizes=c(1:13),rfeControl=control_RF_LOOCV)
+sprintf("The optimal number of variables is: %s", results_rfe_rf_loocv$bestSubset)
+sprintf("Optimal Variable: %s", results_rfe_rf_loocv$optVariables)
 
 results_rfe2 <- rfe(x =x_train , y= y_train , sizes=c(1:13),rfeControl=control_TB_LOOCV)
 sprintf("The optimal number of variables is: %s", results_rfe2$bestSubset)
@@ -337,15 +339,24 @@ plot(results_rfe2, type = c("g", "o"))
 
 #plot variable importance for random forest with cross validation 
 png(filename="figures/Var_Imp.png", units ='in', height=5, width=5, res = 1000)
-varimp_data <- data.frame(feature = row.names(varImp(results_rfe1))[1:2],
-                          importance = varImp(results_rfe1)[1:2, 1])
-ggplot(data = varimp_data, 
+varimp_data <- data.frame(feature = row.names(varImp(results_rfe1))[1],
+                          importance = varImp(results_rfe1)[1, 1])
+plot_var_imp = ggplot(data = varimp_data, 
        aes(x = reorder(feature, -importance), y = importance, fill = feature)) +
   geom_bar(stat="identity") + labs(x = "Features", y = "Variable Importance") + 
   geom_text(aes(label = round(importance, 2)), vjust=1.25, hjust=1.25,color="white", size=4) + 
-  theme_bw() + theme(legend.position = "none") +
+  theme_bw() + theme(legend.position = "none", 
+                     axis.text.y = element_text(angle = 45, hjust = 1, size =12)) +
   coord_flip()
+print(plot_var_imp)
 dev.off()
+
+# Combine plots and label them
+#combined_plot <- plot_grid(plot1, plot_var_imp, labels = c("a", "b"), ncol = 1)
+combined_plot <- grid.arrange(plot1, plot_var_imp, ncol = 1)
+
+# Save the combined plot as a PNG
+ggsave("figures/combined_plot_RMSE_var_imp.png", combined_plot, height=8, width=8)
 
 #plot variable importance for bagged trees with "leave-one-out cross-validation" 
 png(filename="figures/Var_Imp_LOOCV.png", units ='in', height=4, width=4, res = 1000)
@@ -370,9 +381,9 @@ dev.off()
 ################################################################################ 
 #Alternative approach
 
-Weekly_Data<-as.data.frame(weekly_data)
+Weekly_Data<-as.data.frame(Weekly_Data)
 
-rfe_fit<- rfeTerminator(Weekly_Data, x_cols= 1:12, y_cols=13, alter_df = TRUE, eval_funcs = rfFuncs)
+rfe_fit<- rfeTerminator(Weekly_Data, x_cols= 1:13, y_cols=14, alter_df = TRUE, eval_funcs = rfFuncs)
 
 #Explore the optimal model results
 print(rfe_fit$rfe_model_fit_results)
