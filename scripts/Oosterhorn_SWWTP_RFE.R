@@ -4,8 +4,11 @@
 
 ################################################################################
 ##install and load packages 
-
-source(file = "scripts/install_load_packages.r")
+suppressMessages({
+  suppressWarnings({
+    source(file = "scripts/install_load_packages.r")
+  })
+})
 
 ################################################################################
 ##Create folder for project organization
@@ -24,10 +27,10 @@ eff_data = read_excel("input_data/ZAWZI_INF_lab.xlsx")
 online_data = read_excel("input_data/ZAWZI_Online_data.xlsx") 
 SVI_data = read_excel("input_data/ZAWZI_AT_SVI_DS.xlsx") 
 
-##Load weekly averaged data and rarity from microbiome analysis 
-weekly_data = read_excel("input_data/WWTP_processdata_perweek_20180125_NGS_T.xlsx") 
-rarity = read_csv("input_data/Rarity.csv")
-
+##Load weekly averaged data and diversity from microbiome analysis 
+Weekly_Data = read_excel("input_data/WWTP_processdata_perweek_20180125_NGS_T.xlsx") 
+diversity = read_csv("input_data/alpha_diversity.csv")
+diversity =diversity [ ,5]
 ################################################################################
 ##EDA
 
@@ -84,7 +87,7 @@ eff_data[3:20] %>%
 ##Pre-processing: correlation analysis
 
 #Use rough process data to conduct correlational analysis for each group
-#of parameters in order to utilize the biggest amount of informational http://127.0.0.1:40819/graphics/plot_zoom_png?width=904&height=778
+#of parameters in order to utilize the biggest amount of informational 
 #without information loss resulting from data averaging or data selection 
 
 #scatter plot can help identify correlation which is skewed due to outliers 
@@ -99,8 +102,8 @@ eff_data[3:20] %>%
 inf_corr <- round(cor(inf_lab[3:20],use = 'pairwise.complete.obs'), 2)
 inf_testRes= cor.mtest(inf_lab[3:20],conf.level = 0.95)
 
-png("figures/inf_cor.png", units="in", width=5, height=5, res=1000)
-corr_inf_plot  =corrplot(inf_corr, order ='hclust', addrec =11 , rect.col = "green",
+png("figures/inf_cor.png", units="in", width=8, height=7, res=1000)
+corr_inf_plot  =corrplot(inf_corr, order ='hclust', hclust.method ='complete' , addrec =11 , rect.col = "green",
                          rect.lwd = 3 ,method = 'circle', addCoef.col = 'white',
                          number.digits = 1,number.cex = 0.5,tl.pos ='lt', tl.srt=45, tl.cex =0.6)
 dev.off()
@@ -119,7 +122,7 @@ png(filename="figures/missing_inf.png" ,units = 'in',width=9, height=6, res=1000
 plot_missing(inf_lab, title = "missing data profile for influent lab analysis")
 dev.off()
 #selected parameters
-inf_lab_selected=  colnames(inf_lab[c(4,5,7,11,14,16,18,20)])
+inf_lab_selected=  colnames(inf_lab[c(4,5,7,8,11,12,14,16,18,20)])
 cat("The selected parameters from the influent lab dataset are: ",inf_lab_selected )
 
 selected_parameters = inf_lab_selected
@@ -193,11 +196,11 @@ dev.off()
 #                           colors = c("#6D9EC1", "white", "#E46726"), p.mat= SVI_testRes$p)
 
 plot_missing(SVI_data, title = "missing data profile for SVI dataset")
+ 
+#SVI_selected=  colnames(SVI_data[5])
+#cat("The selected parameters from the SVI dataset is: ",SVI_selected )
 
-SVI_selected=  colnames(SVI_data[5])
-cat("The selected parameters from the SVI dataset is: ",SVI_selected )
-
-selected_parameters = c(selected_parameters, SVI_selected)
+#selected_parameters = c(selected_parameters, SVI_selected)
 
 ################################################################################
 ##Effluent data is not used in our analysis approach
@@ -212,8 +215,8 @@ selected_parameters = c(selected_parameters, SVI_selected)
 
 #After we have selected parameters using collinearity analysis, we subset 
 #weekly averaged data using the selected parameters 
-selected_parameters = c(selected_parameters, "T_avg_C")
-weekly_data = weekly_data[selected_parameters]
+#selected_parameters = c(selected_parameters, "T_avg_C")
+Weekly_Data = Weekly_Data[selected_parameters]
 
 #check 
 #dim(weekly_data)
@@ -222,28 +225,28 @@ weekly_data = weekly_data[selected_parameters]
 #check 
 #colSums(is.na(weekly_data))
 
-plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
-weekly_data =  subset(weekly_data, select = -c(INF_K_mg_per_l,INF_pH_pH))
+plot_missing(Weekly_Data, title = "missing data profile for selected parameters in weekly data")
+Weekly_Data =  subset(Weekly_Data, select = -c(INF_K_mg_per_l,INF_pH_pH))
 
 #check
-plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
+plot_missing(Weekly_Data, title = "missing data profile for selected parameters in weekly data")
 
 ###############################################################################
 ## Multi-collinearity analysis 
 
 #Check for multi-collinearity problem
-weekly_data_cor = cor(weekly_data, use = "pairwise.complete.obs")
-weekly_data_testRes= cor.mtest(weekly_data,conf.level = 0.95)
+weekly_data_cor = cor(Weekly_Data, use = "pairwise.complete.obs")
+weekly_data_testRes= cor.mtest(Weekly_Data,conf.level = 0.95)
 
 #Condition number ratio of max to min Eigen values of the correlation matrix  
 kappa(weekly_data_cor,exact=TRUE)
 # A condition number between 10 and 30 indicates the presence of multicollinearity
 #and when a value is larger than 30, the multicollinearity is regarded as strong.
 
-#rarity as a target value to check VIF
-weekly_data$rarity = rarity$log_modulo_skewness
+#diversity as a target value to check VIF
+Weekly_Data$diversity = diversity$gini_simpson
 
-model1 = lm(rarity~., data = weekly_data)
+model1 = lm(diversity~., data = Weekly_Data)
 vif(model1)
 mean(vif(model1))
 #if bigger than 4 there is concerning multi-collinearity in the data 
@@ -251,7 +254,7 @@ mean(vif(model1))
 
 ################################################################################
 #remove parameters with missing data points
-weekly_data =  subset(weekly_data, select = -c(Sludge_load_calc_WWTP_kg_COD_per_kg_DW_per_d,Inf_P_tot_kg_per_d,T_avg_C))
+Weekly_Data =  subset(Weekly_Data, select = -c(Sludge_load_calc_WWTP_kg_COD_per_kg_DW_per_d, Inf_P_tot_kg_per_d,INF_NO2_mg_N_per_l))
 
 #weekly_data = weekly_data[-c(8,9,10)]
 
@@ -262,7 +265,7 @@ weekly_data_testRes= cor.mtest(weekly_data,conf.level = 0.95)
 #Condition number ratio of max to min Eigen values of the correlation matrix  
 kappa(weekly_data_cor,exact=TRUE)
 
-model1 = lm(rarity~., data = weekly_data)
+model1 = lm(diversity~., data = weekly_data)
 vif(model1)
 mean(vif(model1))
 plot_missing(weekly_data, title = "missing data profile for selected parameters in weekly data")
@@ -285,13 +288,13 @@ weekly_data %>%
 #ref2 is fitted to bagged trees model with with leave one out cross correlation
 Weekly_Data <- weekly_data
 
-#12 input and rarity column 13 is output 
+#12 input and diversity column 13 is output 
 #normalization of the variable values and splitting of input and target values  
 x <-Weekly_Data[,1:13]
 normalization <- preProcess(x)
 x <- predict(normalization, x)
 x <- as.data.frame(x)
-y<- Weekly_Data$rarity
+y<- diversity
 
 #training scheme: setting up the controls for each recursive feature elimination 
 control_RF_CV = rfeControl(functions=rfFuncs, method="cv", repeats = 5, number = 10, returnResamp = 'all')
@@ -301,7 +304,7 @@ control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResa
 set.seed(11227430)
 
 #split data- 80% for training and 20% for testing 
-inTrain <- createDataPartition(Weekly_Data$rarity, p= .80, list = FALSE)[,1]
+inTrain <- createDataPartition(Weekly_Data$diversity, p= .80, list = FALSE)[,1]
 
 x_train <- x[ inTrain, ]
 x_test <- x[-inTrain, ]
