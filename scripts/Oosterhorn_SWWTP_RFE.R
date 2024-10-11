@@ -85,17 +85,6 @@ eff_data[3:20] %>%
 ################################################################################
 ##Pre-processing: correlation analysis
 
-#Use rough process data to conduct correlational analysis for each group
-#of parameters in order to utilize the biggest amount of informational 
-#without information loss resulting from data averaging or data selection 
-
-#scatter plot can help identify correlation which is skewed due to outliers 
-
-################################################################################
-##Calculating correlation matrix 
-##Plotting correlation heatmaps and exporting the figures 
-##Plotting pairplots and exporting the figures 
-
 ################################################################################
 ##inf_lab
 inf_corr <- round(cor(inf_lab[3:20],use = 'pairwise.complete.obs'), 2)
@@ -106,20 +95,17 @@ corr_inf_plot  =corrplot(inf_corr, order ='hclust', hclust.method ='complete' , 
                          rect.lwd = 3 ,method = 'circle', addCoef.col = 'white',
                          number.digits = 1,number.cex = 0.5,tl.pos ='lt', tl.srt=45, tl.cex =0.6)
 dev.off()
-#Alternatively, we can see with the p-test that correlation is significant 
-#corr_inf_plot = ggcorrplot(inf_corr, hc.order = TRUE, type= "upper", lab = TRUE, 
-#                           outline.col = "white",
-#                           ggtheme = ggplot2::theme_gray,
-#                           colors = c("#6D9EC1", "white", "#E46726"), p.mat= inf_testRes$p)
 
 #Nitrogen speciations
 png(filename="figures/pairplot_N.png" ,units = 'in',width=10, height=8, res=1000)
 ggpairs(inf_lab[c(8,10:13)],lower = list(continuous = "smooth"))
 dev.off()
+
 #Missing data from influent 
 png(filename="figures/missing_inf.png" ,units = 'in',width=9, height=6, res=1000)
 plot_missing(inf_lab, title = "missing data profile for influent lab analysis")
 dev.off()
+
 #selected parameters
 inf_lab_selected=  colnames(inf_lab[c(4,5,7,8,11,12,14,16,18,20)])
 cat("The selected parameters from the influent lab dataset are: ",inf_lab_selected )
@@ -131,13 +117,6 @@ selected_parameters = inf_lab_selected
 png(filename="figures/glycerol_pairpanels.png", units = 'in',height = 5, width = 7.5,res =1000)
 ggpairs(glycerol_methanol[3:4],lower = list(continuous = "smooth"))
 dev.off()
-#Alternatively, we can see with the p-test that correlation is significant 
-#glycerol_corr <- round(cor(glycerol_methanol[3:4]), 2)
-#glycerol_testRes= cor.mtest(glycerol_methanol[3:4],conf.level = 0.95)
-#corr_glycerol_plot = ggcorrplot(glycerol_corr, hc.order = TRUE, type= "upper", lab = TRUE, 
-#                                outline.col = "white",
-#                                ggtheme = ggplot2::theme_gray,
-#                                colors = c("#6D9EC1", "white", "#E46726"), p.mat= glycerol_testRes$p)
 
 plot_missing(glycerol_methanol, title = "missing data profile for glycerol and methanol dataset")
 
@@ -150,19 +129,11 @@ selected_parameters = c(selected_parameters, glycerol_methanol_selected)
 png(filename="figures/additional_data_pairspanels.png",units = 'in', width = 10, height = 5, res = 1000)
 pairs.panels(additional_data[4:6], cex.cor=0.3 ,cex.labels=1, cex.axis = 1)
 dev.off()
-#Alternatively
-#additional_corr <- round(cor(additional_data[4:6],use = 'pairwise.complete.obs'), 2)
-#additional_testRes= cor.mtest(additional_data[4:6],conf.level = 0.95)
-#corr_additional_plot = ggcorrplot(additional_corr, hc.order = TRUE, type= "upper", lab = TRUE, 
-#                                  outline.col = "white",
-#                                  ggtheme = ggplot2::theme_gray,
-#                                  colors = c("#6D9EC1", "white", "#E46726"), p.mat= additional_testRes$p)
 
 additional_selected=  colnames(additional_data[4:6])
 cat("The selected parameters from the influent lab dataset are: ",additional_selected )
 
 selected_parameters = c(selected_parameters, additional_selected)
-
 ################################################################################
 ##online_data
 online_corr <- round(cor(online_data[c(3:6,10)],use = 'pairwise.complete.obs'), 2)
@@ -182,29 +153,6 @@ cat("The selected parameters from the online dataset are: ",online_selected )
 selected_parameters = c(selected_parameters, online_selected)
 
 ################################################################################
-##SVI_data
-png(filename="figures/SVI_pairspanels.png",units = 'in', height=10, width=10, res = 1000)
-ggpairs(SVI_data[3:9], lower = list(continuous = "smooth"))
-dev.off()
-#Alternatively, 
-#SVI_corr <- round(cor(SVI_data[3:9],use = 'pairwise.complete.obs'), 2)
-#SVI_testRes= cor.mtest(SVI_data[3:9],conf.level = 0.95)
-#corr_SVI_plot = ggcorrplot(SVI_corr, hc.order = TRUE, type= "upper", lab = TRUE, 
-#                           outline.col = "white",
-#                           ggtheme = ggplot2::theme_gray,
-#                           colors = c("#6D9EC1", "white", "#E46726"), p.mat= SVI_testRes$p)
-
-plot_missing(SVI_data, title = "missing data profile for SVI dataset")
- 
-#SVI_selected=  colnames(SVI_data[5])
-#cat("The selected parameters from the SVI dataset is: ",SVI_selected )
-
-#selected_parameters = c(selected_parameters, SVI_selected)
-
-################################################################################
-##Effluent data is not used in our analysis approach
-#eff_corr <- round(cor(eff_data[3:20],use = 'pairwise.complete.obs'), 2)
-#eff_testRes= cor.mtest(eff_data[3:20],conf.level = 0.95)
 
 ###############################################################################
 ##subsetting weekly data 
@@ -212,11 +160,7 @@ plot_missing(SVI_data, title = "missing data profile for SVI dataset")
 #In case week value is missing and doesn't align with NGS, we take the value before
 #Because the process parameters impact the microbiome and vice versa 
 
-#After we have selected parameters using collinearity analysis, we subset 
-#weekly averaged data using the selected parameters 
-#selected_parameters = c(selected_parameters, "T_avg_C")
 Weekly_Data = Weekly_Data[selected_parameters]
-
 
 #check 
 #colSums(is.na(Weekly_Data))
@@ -246,7 +190,6 @@ model1 = lm(diversity~., data = Weekly_Data)
 vif(model1)
 mean(vif(model1))
 #if bigger than 4 there is concerning multi-collinearity in the data 
-
 
 ################################################################################
 #remove parameters with missing data points
@@ -284,7 +227,7 @@ Weekly_Data %>%
 #ref2 is fitted to bagged trees model with with leave one out cross correlation
 #Weekly_Data <- weekly_data
 
-#12 input and diversity column 13 is output 
+#13 input and diversity column 14 is output 
 #normalization of the variable values and splitting of input and target values  
 x <-Weekly_Data[,1:13]
 normalization <- preProcess(x)
@@ -294,11 +237,11 @@ y<- as.data.frame(diversity)
 
 #training scheme: setting up the controls for each recursive feature elimination 
 control_RF_CV = rfeControl(functions=rfFuncs, method="cv", repeats = 5, number = 10, returnResamp = 'all')
-control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResamp = 'all')
 control_RF_LOOCV = rfeControl(functions=rfFuncs, method="LOOCV", returnResamp = 'all')
+control_TB_LOOCV = rfeControl(functions=treebagFuncs, method="LOOCV", returnResamp = 'all')
 
 #reproducible data 
-set.seed(21321)
+set.seed(121321)
 
 #split data- 80% for training and 20% for testing 
 inTrain <- createDataPartition(Weekly_Data$diversity, p= .80, list = FALSE)[,1]
@@ -339,8 +282,8 @@ plot(results_rfe2, type = c("g", "o"))
 
 #plot variable importance for random forest with cross validation 
 png(filename="figures/Var_Imp.png", units ='in', height=5, width=5, res = 1000)
-varimp_data <- data.frame(feature = row.names(varImp(results_rfe1))[1],
-                          importance = varImp(results_rfe1)[1, 1])
+varimp_data <- data.frame(feature = row.names(varImp(results_rfe1))[1:3],
+                          importance = varImp(results_rfe1)[1:3, 1])
 plot_var_imp = ggplot(data = varimp_data, 
        aes(x = reorder(feature, -importance), y = importance, fill = feature)) +
   geom_bar(stat="identity") + labs(x = "Features", y = "Variable Importance") + 
@@ -386,22 +329,4 @@ png(filename="figures/Density.png", units ='in', height=5, width=8, res = 1000)
 plot7 = densityplot(results_rfe1)
 print(plot7)
 dev.off()
-
-################################################################################ 
-#Alternative approach
-
-Weekly_Data<-as.data.frame(Weekly_Data)
-
-rfe_fit<- rfeTerminator(Weekly_Data, x_cols= 1:13, y_cols=14, alter_df = TRUE, eval_funcs = rfFuncs)
-
-#Explore the optimal model results
-print(rfe_fit$rfe_model_fit_results)
-# Explore the optimal variables selected
-print(rfe_fit$rfe_model_fit_results$optVariables)
-# Explore the original data passed to the frame
-print(head(rfe_fit$rfe_original_data))
-# Explore the data adapted with the less important features removed
-print(head(rfe_fit$rfe_reduced_data))
-
-
 
