@@ -1,0 +1,11 @@
+cff-version: 0.1.1
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Mahajna"
+  given-names: "Asala"
+  orcid: "https://orcid.org/0000-0002-8205-6969"
+title: "Recursive Feature Elimination"
+version: 0.1.1
+DOI: 10.5281/zenodo.13919420
+date-released: 2024-10-11
+url: "https://github.com/AMahajna/Oosterhorn_SWWTP_RFE" 
